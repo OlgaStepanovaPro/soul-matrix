@@ -143,10 +143,11 @@ if st.button("Рассчитать матрицу"):
         if info:
             st.markdown(f"🔹 **Архетип:** *{info['архетип']}*")
             st.markdown(f"🟢 **Свет:** {info['свет']}")
+            # Кнопка "Подробнее" для описания тени и практик
             with st.expander("Подробнее по тени"):
                 st.write(info['тень'])
                 practices = PRACTICES.get(code, [])
-                st.multiselect("Практики для тени", practices, practices)
+                st.multiselect("Практики для тени", practices, default=practices)
             st.markdown(f"💡 **Рекомендации:** {info['рекомендации']}")
         for a,b in links:
             if res.get(a)==res.get(b)==code:
@@ -156,9 +157,64 @@ if st.button("Рассчитать матрицу"):
                 st.markdown("<span style='color:#888;'>Одна и та же энергия раскрывается в этих двух зонах жизни.</span>",unsafe_allow_html=True)
         st.write("---")
 
-# ▶️ 5. Функция для рисования круга (заглушка)
+# ▶️ 5. Функция для рисования круга (Plotly Polar диаграмма)
+import plotly.graph_objects as go
+
 def draw_energy_circle(result):
-    import plotly.graph_objs as go
-    # Реализация визуализации будет здесь
+    # Список позиций для круга
+    positions = [
+        "Код Души", "Кармический хвост", "Путь Души",
+        "Дар/Потенциал", "Код тела/реализация", "Энергия года рождения",
+        "Врата Души", "Код Изобилия", "Инкарнационная память",
+        "Канал реализации", "Канал любви", "Канал духа"
+    ]
+    # Углы для секторов
+    total = len(positions)
+    theta = [i * 360 / total for i in range(total)]
+    # Цвет сектора по коду
+    colors = [ARCHETYPES[result[pos]]['color'] for pos in positions]
+
     fig = go.Figure()
+    # Добавляем сектора Barpolar
+    for angle, pos, col in zip(theta, positions, colors):
+        fig.add_trace(go.Barpolar(
+            r=[1],
+            theta=[angle],
+            width=[360/total],
+            marker_color=col,
+            marker_line_color='white',
+            marker_line_width=1,
+            opacity=0.8,
+            name=pos
+        ))
+    # Добавляем дуги связей
+    links = [
+        ("Врата Души", "Дар/Потенциал"),
+        ("Код Изобилия", "Кармический хвост"),
+        ("Канал реализации", "Путь Души"),
+        ("Канал любви", "Код тела/реализация"),
+        ("Канал духа", "Энергия года рождения")
+    ]
+    for a, b in links:
+        if result[a] == result[b]:
+            ia, ib = positions.index(a), positions.index(b)
+            ta, tb = theta[ia], theta[ib]
+            fig.add_trace(go.Scatterpolar(
+                r=[1.1, 1.1],
+                theta=[ta, tb],
+                mode='lines',
+                line=dict(color='#888', width=2),
+                hoverinfo='none',
+                showlegend=False
+            ))
+    # Настройка вида
+    fig.update_layout(
+        template=None,
+        polar=dict(
+            radialaxis=dict(visible=False),
+            angularaxis=dict(showticklabels=False, ticks='')
+        ),
+        showlegend=False,
+        margin=dict(l=0, r=0, t=0, b=0)
+    )
     return fig
