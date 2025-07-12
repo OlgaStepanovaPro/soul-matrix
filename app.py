@@ -139,4 +139,10 @@ def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
         "Дар / Потенциал": gift,
         "Код Тела / Реализации": body_code,
         "Энергия года рождения": birth_code,
-        "Врата Душ
+        "Врата Души": gates,
+        "Код Изобилия": abundance,
+        "Инкарнационная память": memory,
+        "Канал Реализации": realization,
+        "Канал Любви": love,
+        "Канал Духа": spirit
+    }
