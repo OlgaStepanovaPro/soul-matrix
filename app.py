@@ -126,12 +126,14 @@ def render_psychological_portrait(energies):
         st.markdown("**Внутренний конфликт:** Служение (33) ↔ Самость (1). Научиться сочетать помощь другим с проявлением себя.")
 
     # Обобщённый портрет
-    dominant = counts.most_common(1)[0][0]
-    archetype = ARCHETYPES[dominant]
-    st.markdown("**Обобщённый портрет:**")
-    st.markdown(f"Выраженная энергия: **{dominant} — {archetype['название']}**")
-    st.markdown(f"Суть: {archetype['описание']}")
-    st.markdown(f"Ключевой вектор развития: {archetype['задача']}")
-    st.markdown(f"Поддержка: {archetype['рекомендации']}")
+    if counts:
+        dominant = counts.most_common(1)[0][0]
+        archetype = ARCHETYPES.get(dominant)
+        if archetype:
+            st.markdown("**Обобщённый портрет:**")
+            st.markdown(f"Выраженная энергия: **{dominant} — {archetype['название']}**")
+            st.markdown(f"Суть: {archetype['описание']}")
+            st.markdown(f"Ключевой вектор развития: {archetype['задача']}")
+            st.markdown(f"Поддержка: {archetype['рекомендации']}")
 
     st.markdown("\n---\n")
