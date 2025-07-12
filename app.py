@@ -108,24 +108,35 @@ ARCHETYPES: dict[int, dict[str, str]] = {
 # --------------------------------------------------
 
 def reduce_num(n: int) -> int:
-    """Свернуть число до однозначного или мастер‑числа."""
+    """Свернуть число до однозначного или мастер‑числа (11, 22, 33)."""
     while n not in {11, 22, 33} and n > 9:
         n = sum(int(d) for d in str(n))
     return n
 
 
-def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
-    """Возвращает словарь из 12 позиций нумерологической матрицы."""
-    sum_d = sum(int(i) for i in str(day))
-    sum_m = sum(int(i) for i in str(month))
-    sum_y = sum(int(i) for i in str(year))
+def digit_sum(n: int) -> int:
+    """Просто сумма цифр (без финальной редукции)."""
+    return sum(int(d) for d in str(n))
 
-    life_path = reduce_num(sum(int(i) for i in f"{day:02d}{month:02d}{year}"))
-    soul_code = reduce_num(sum_d + sum_m + sum_y)
-    karma_tail = reduce_num(sum_d + sum_m)
-    gift = reduce_num(sum_d + sum_y)
-    body_code = reduce_num(sum_m)
-    birth_code = reduce_num(sum_y)
+
+def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
+    """Возвращает словарь из 12 позиций нумерологической матрицы.
+    Мастер‑числа 11, 22, 33 сохраняются, если встречаются в дне, месяце
+    или после свёртки года.
+    """
+
+    # 1) Базовые редукции для дня, месяца, года (с учётом мастеров)
+    red_day = reduce_num(day)                # 11 и 22 дня сохранятся
+    red_month = reduce_num(month)            # 11 месяца сохранится
+    red_year = reduce_num(digit_sum(year))   # 1984 → 22 (мастер‑число)
+
+    # 2) Ключевые суммы
+    life_path = reduce_num(digit_sum(day) + digit_sum(month) + digit_sum(year))
+    soul_code = reduce_num(red_day + red_month + red_year)
+    karma_tail = reduce_num(red_day + red_month)
+    gift = reduce_num(red_day + red_year)
+    body_code = red_month
+    birth_code = red_year
 
     gates = reduce_num(abs(soul_code - karma_tail))
     abundance = reduce_num(gift + body_code)
@@ -135,6 +146,19 @@ def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
     spirit = reduce_num(life_path + birth_code)
 
     return {
+        "Число Жизненного Пути": life_path,
+        "Число Души": soul_code,
+        "Число Кармы": karma_tail,
+        "Дар / Потенциал": gift,
+        "Код Тела / Реализации": body_code,
+        "Энергия года рождения": birth_code,
+        "Врата Души": gates,
+        "Код Изобилия": abundance,
+        "Инкарнационная память": memory,
+        "Канал Реализации": realization,
+        "Канал Любви": love,
+        "Канал Духа": spirit
+    }
         "Число Жизненного Пути": life_path,
         "Число Души": soul_code,
         "Число Кармы": karma_tail,
