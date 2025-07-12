@@ -124,3 +124,6 @@ def render_psychological_portrait(energies):
     # Ключевые темы
     if 1 in energies and 33 in energies:
         st.markdown("**Внутренний конфликт:** Служение (33) ↔ Самость (1). Научиться сочетать помощь другим с проявлением себя.")
+
+    st.markdown("\n---\n")
+
