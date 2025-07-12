@@ -108,29 +108,18 @@ ARCHETYPES: dict[int, dict[str, str]] = {
 # --------------------------------------------------
 
 def reduce_num(n: int) -> int:
-    """Свернуть число до однозначного или мастер‑числа (11, 22, 33)."""
     while n not in {11, 22, 33} and n > 9:
         n = sum(int(d) for d in str(n))
     return n
 
-
 def digit_sum(n: int) -> int:
-    """Просто сумма цифр (без финальной редукции)."""
     return sum(int(d) for d in str(n))
 
-
 def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
-    """Возвращает словарь из 12 позиций нумерологической матрицы.
-    Мастер‑числа 11, 22, 33 сохраняются, если встречаются в дне, месяце
-    или после свёртки года.
-    """
+    red_day = reduce_num(day)
+    red_month = reduce_num(month)
+    red_year = reduce_num(digit_sum(year))
 
-    # 1) Базовые редукции для дня, месяца, года (с учётом мастеров)
-    red_day = reduce_num(day)                # 11 и 22 дня сохранятся
-    red_month = reduce_num(month)            # 11 месяца сохранится
-    red_year = reduce_num(digit_sum(year))   # 1984 → 22 (мастер‑число)
-
-    # 2) Ключевые суммы
     life_path = reduce_num(digit_sum(day) + digit_sum(month) + digit_sum(year))
     soul_code = reduce_num(red_day + red_month + red_year)
     karma_tail = reduce_num(red_day + red_month)
@@ -146,6 +135,11 @@ def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
     spirit = reduce_num(life_path + birth_code)
 
     return {
+        "🔢 Промежуточные суммы": {
+            "Сокращённый день": red_day,
+            "Сокращённый месяц": red_month,
+            "Сокращённый год (по сумме)": red_year
+        },
         "Число Жизненного Пути": life_path,
         "Число Души": soul_code,
         "Число Кармы": karma_tail,
@@ -159,88 +153,71 @@ def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
         "Канал Любви": love,
         "Канал Духа": spirit
     }
-        "Число Жизненного Пути": life_path,
-        "Число Души": soul_code,
-        "Число Кармы": karma_tail,
-        "Дар / Потенциал": gift,
-        "Код Тела / Реализации": body_code,
-        "Энергия года рождения": birth_code,
-        "Врата Души": gates,
-        "Код Изобилия": abundance,
-        "Инкарнационная память": memory,
-        "Канал Реализации": realization,
-        "Канал Любви": love,
-        "Канал Духа": spirit
-    }
-
 
 # --------------------------------------------------
-# 3. Психологический портрет
+# 3. Интерфейс Streamlit
 # --------------------------------------------------
 
-def render_psychological_portrait(values: list[int]) -> None:
+st.set_page_config(page_title="Числа Судьбы", page_icon="🔢")
+st.title("🔢 Калькулятор «Числа Судьбы»")
+st.markdown("Введите дату рождения для расчёта нумерологического профиля:")
+
+col1, col2, col3 = st.columns(3)
+with col1:
+    day = st.number_input("День", min_value=1, max_value=31, value=1)
+with col2:
+    month = st.number_input("Месяц", min_value=1, max_value=12, value=1)
+with col3:
+    year = st.number_input("Год", min_value=1900, max_value=2100, value=1984)
+
+if st.button("🔍 Рассчитать"):
+    matrix = calculate_matrix(day, month, year)
+
+    st.subheader("📊 Промежуточные суммы")
+    for k, v in matrix["🔢 Промежуточные суммы"].items():
+        st.write(f"**{k}**: {v}")
+    st.markdown("---")
+
+    st.subheader("🌟 Индивидуальные Числа Судьбы")
+    full_list = []
+    for key, value in matrix.items():
+        if key == "🔢 Промежуточные суммы":
+            continue
+        full_list.append(value)
+        archetype = ARCHETYPES.get(value)
+        st.markdown(f"### 🔹 {key}: {value} — {archetype['название'] if archetype else 'Нет описания'}")
+        if archetype:
+            st.markdown(f"**Суть**: {archetype['описание']}")
+            st.markdown(f"**Свет**: {archetype['свет']}")
+            st.markdown(f"**Тень**: {archetype['тень']}")
+            st.markdown(f"**Задача**: {archetype['задача']}")
+            st.markdown(f"**Рекомендации**: {archetype['рекомендации']}")
+            st.markdown("---")
+
     st.subheader("🎯 Психологический портрет")
-    counts = Counter(values)
+    counter = Counter(full_list)
+    повтор = "\n".join([f"Число {k} ({v} раз) — {ARCHETYPES[k]['название']}" for k, v in counter.items() if v > 1])
+    мастер = "\n".join([f"{k} — {ARCHETYPES[k]['название']}" for k in counter if k in (11, 22, 33)])
+    конфликт = ""
+    if matrix.get("Число Жизненного Пути") != matrix.get("Число Кармы"):
+        a = matrix["Число Жизненного Пути"]
+        b = matrix["Число Кармы"]
+        if ARCHETYPES.get(a) and ARCHETYPES.get(b):
+            конфликт = f"Внутренний конфликт: **{a} ↔ {b}** — {ARCHETYPES[a]['название']} ↔ {ARCHETYPES[b]['название']}"
 
-    # Повторяющиеся энергии
-    reps = [f"Число {k} ({v} раз) — {ARCHETYPES[k]['название']}" for k, v in counts.items() if v > 1]
-    if reps:
-        st.markdown("**Повторяющиеся энергии:**")
-        for line in reps:
-            st.markdown(f"- {line}")
+    st.markdown("**Повторяющиеся энергии:**")
+    st.markdown(повтор or "—")
+    st.markdown("**Мастер-энергии:**")
+    st.markdown(мастер or "—")
+    if конфликт:
+        st.markdown(f"**{конфликт}**")
 
-    # Мастер‑энергии
-    masters = [n for n in values if n in {11, 22, 33}]
-    if masters:
-        st.markdown("**Мастер‑энергии:**")
-        for m in sorted(set(masters)):
-            st.markdown(f"- {m} — {ARCHETYPES[m]['название']}")
-
-    # Конфликт 1 и 33
-    if 1 in values and 33 in values:
-        st.warning("Внутренний конфликт: служение (33) ↔ самость (1). Найти баланс между собой и другими.")
-
-    # Обобщённый портрет
-    dominant, dom_count = counts.most_common(1)[0]
-    art = ARCHETYPES[dominant]
-    st.markdown("**Обобщённый портрет личности:**")
-    st.markdown(f"Главная энергия: **{dominant} — {art['название']}** (повторяется {dom_count}×)")
-    st.markdown(f"Суть: {art['описание']}")
-    st.markdown(f"Ключевая задача: {art['задача']}")
-    st.markdown(f"Поддержка: {art['рекомендации']}")
-
-
-# --------------------------------------------------
-# 4. Streamlit UI
-# --------------------------------------------------
-
-st.set_page_config(page_title="Числа судьбы", page_icon="🔢", layout="centered")
-st.title("🔢 Калькулятор \"Числа судьбы\"")
-
-with st.form("input_form"):
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        day = st.number_input("День", 1, 31, 1)
-    with col2:
-        month = st.number_input("Месяц", 1, 12, 1)
-    with col3:
-        year = st.number_input("Год", 1900, 2100, 1984)
-    submitted = st.form_submit_button("Рассчитать")
-
-if submitted:
-    matrix = calculate_matrix(int(day), int(month), int(year))
-
-    # Показ позиций
-    for name, val in matrix.items():
-        art = ARCHETYPES.get(val)
-        st.markdown(f"### {name}: {val} — {art['название'] if art else 'Неизвестно'}")
-        if art:
-            st.markdown(f"**Суть:** {art['описание']}")
-            st.markdown(f"**Свет:** {art['свет']}")
-            st.markdown(f"**Тень:** {art['тень']}")
-            st.markdown(f"**Задача:** {art['задача']}")
-            st.markdown(f"**Рекомендации:** {art['рекомендации']}")
-        st.markdown("---")
-
-    # Психологический портрет
-    render_psychological_portrait(list(matrix.values()))
+    key_traits = sorted(counter.items(), key=lambda x: -x[1])[:2]
+    portrait_parts = []
+    for num, _ in key_traits:
+        arche = ARCHETYPES.get(num)
+        if arche:
+            portrait_parts.append(arche["описание"])
+    if portrait_parts:
+        st.markdown("**Обобщённый портрет личности:**")
+        st.markdown(" ".join(portrait_parts))
