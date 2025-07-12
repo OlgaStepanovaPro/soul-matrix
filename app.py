@@ -1,7 +1,9 @@
 import streamlit as st
 from collections import Counter
 
-# -------------------- 1. Архетипы -------------------- #
+# --------------------------------------------------
+# 1. Архетипы чисел (1‑9, 11, 22, 33)
+# --------------------------------------------------
 ARCHETYPES: dict[int, dict[str, str]] = {
     1: {
         "название": "Путь Воина / Лидера",
@@ -9,7 +11,7 @@ ARCHETYPES: dict[int, dict[str, str]] = {
         "свет": "Новатор, лидер, уверенный в себе.",
         "тень": "Упрямство, эгоизм, страх одиночества.",
         "задача": "Иди своим путём, не бойся быть первой и уникальной.",
-        "рекомендации": "Смелее прояви лидерство: начни проект, который давно откладываешь."
+        "рекомендации": "Смелее проявляй лидерство: начни проект, который давно откладываешь."
     },
     2: {
         "название": "Путь Дипломата",
@@ -57,7 +59,7 @@ ARCHETYPES: dict[int, dict[str, str]] = {
         "свет": "Исследователь, наставник, философ.",
         "тень": "Замкнутость, изоляция.",
         "задача": "Делись знаниями, выходи из уединения.",
-        "рекомендации": "Напиши пост, проведи мини‑лекцию или менторь новичка."
+        "рекомендации": "Опубликуй статью или проведи мини‑лекцию."
     },
     8: {
         "название": "Путь Управленца",
@@ -101,36 +103,36 @@ ARCHETYPES: dict[int, dict[str, str]] = {
     },
 }
 
-# -------------------- 2. Вспомогательные функции -------------------- #
+# --------------------------------------------------
+# 2. Вспомогательные функции расчёта
+# --------------------------------------------------
 
 def reduce_num(n: int) -> int:
-    """Сведём число к однозначному или мастер‑числу."""
+    """Свернуть число до однозначного или мастер‑числа."""
     while n not in {11, 22, 33} and n > 9:
         n = sum(int(d) for d in str(n))
     return n
 
 
 def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
-    """Возвращает словарь из 12 позиций матрицы"""
-    d, m, y = day, month, year
+    """Возвращает словарь из 12 позиций нумерологической матрицы."""
+    sum_d = sum(int(i) for i in str(day))
+    sum_m = sum(int(i) for i in str(month))
+    sum_y = sum(int(i) for i in str(year))
 
-    sum_d = sum(int(i) for i in str(d))
-    sum_m = sum(int(i) for i in str(m))
-    sum_y = sum(int(i) for i in str(y))
+    life_path = reduce_num(sum(int(i) for i in f"{day:02d}{month:02d}{year}"))
+    soul_code = reduce_num(sum_d + sum_m + sum_y)
+    karma_tail = reduce_num(sum_d + sum_m)
+    gift = reduce_num(sum_d + sum_y)
+    body_code = reduce_num(sum_m)
+    birth_code = reduce_num(sum_y)
 
-    soul_code = reduce_num(sum_d + sum_m + sum_y)      # код души
-    karma_tail = reduce_num(sum_d + sum_m)              # карма
-    life_path  = reduce_num(sum(int(i) for i in f"{d:02d}{m:02d}{y}"))  # путь души / жизненный путь
-    gift       = reduce_num(sum_d + sum_y)              # дар
-    body_code  = reduce_num(sum_m)                      # тело / реализация
-    birth_code = reduce_num(sum_y)                      # энергия года
-
-    gates      = reduce_num(abs(soul_code - karma_tail))
-    abundance  = reduce_num(gift + body_code)
-    memory     = reduce_num(birth_code + karma_tail)
-    realization= reduce_num(life_path + gift)
-    love       = reduce_num(karma_tail + body_code)
-    spirit     = reduce_num(life_path + birth_code)
+    gates = reduce_num(abs(soul_code - karma_tail))
+    abundance = reduce_num(gift + body_code)
+    memory = reduce_num(birth_code + karma_tail)
+    realization = reduce_num(life_path + gift)
+    love = reduce_num(karma_tail + body_code)
+    spirit = reduce_num(life_path + birth_code)
 
     return {
         "Число Жизненного Пути": life_path,
@@ -146,3 +148,75 @@ def calculate_matrix(day: int, month: int, year: int) -> dict[str, int]:
         "Канал Любви": love,
         "Канал Духа": spirit
     }
+
+
+# --------------------------------------------------
+# 3. Психологический портрет
+# --------------------------------------------------
+
+def render_psychological_portrait(values: list[int]) -> None:
+    st.subheader("🎯 Психологический портрет")
+    counts = Counter(values)
+
+    # Повторяющиеся энергии
+    reps = [f"Число {k} ({v} раз) — {ARCHETYPES[k]['название']}" for k, v in counts.items() if v > 1]
+    if reps:
+        st.markdown("**Повторяющиеся энергии:**")
+        for line in reps:
+            st.markdown(f"- {line}")
+
+    # Мастер‑энергии
+    masters = [n for n in values if n in {11, 22, 33}]
+    if masters:
+        st.markdown("**Мастер‑энергии:**")
+        for m in sorted(set(masters)):
+            st.markdown(f"- {m} — {ARCHETYPES[m]['название']}")
+
+    # Конфликт 1 и 33
+    if 1 in values and 33 in values:
+        st.warning("Внутренний конфликт: служение (33) ↔ самость (1). Найти баланс между собой и другими.")
+
+    # Обобщённый портрет
+    dominant, dom_count = counts.most_common(1)[0]
+    art = ARCHETYPES[dominant]
+    st.markdown("**Обобщённый портрет личности:**")
+    st.markdown(f"Главная энергия: **{dominant} — {art['название']}** (повторяется {dom_count}×)")
+    st.markdown(f"Суть: {art['описание']}")
+    st.markdown(f"Ключевая задача: {art['задача']}")
+    st.markdown(f"Поддержка: {art['рекомендации']}")
+
+
+# --------------------------------------------------
+# 4. Streamlit UI
+# --------------------------------------------------
+
+st.set_page_config(page_title="Числа судьбы", page_icon="🔢", layout="centered")
+st.title("🔢 Калькулятор \"Числа судьбы\"")
+
+with st.form("input_form"):
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        day = st.number_input("День", 1, 31, 1)
+    with col2:
+        month = st.number_input("Месяц", 1, 12, 1)
+    with col3:
+        year = st.number_input("Год", 1900, 2100, 1984)
+    submitted = st.form_submit_button("Рассчитать")
+
+if submitted:
+    matrix = calculate_matrix(int(day), int(month), int(year))
+
+    # Показ позиций
+    for name, val in matrix.items():
+        art = ARCHETYPES.get(val)
+        st.markdown(f"### {name}: {val} — {art['название'] if art else 'Неизвестно'}")
+        if art:
+            st.markdown(f"**Суть:** {art['описание']}")
+            st.markdown(f"**Свет:** {art['свет']}")
+            st.markdown(f"**Тень:** {art['тень']}")
+            st.markdown(f"**Задача:** {art['задача']}")
+            st.markdown(f"**Рекомендации:** {art['рекомендации']}")
+        st.markdown("---")
+
+    # Психологический портрет
+    render_psychological_portrait(list(matrix.values()))
