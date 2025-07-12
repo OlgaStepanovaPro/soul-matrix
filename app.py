@@ -121,69 +121,17 @@ def render_psychological_portrait(energies):
         for m in set(master_numbers):
             st.markdown(f"- {m} — {ARCHETYPES[m]['название']}")
 
-    # Ключевые темы
+    # Внутренние конфликты
     if 1 in energies and 33 in energies:
         st.markdown("**Внутренний конфликт:** Служение (33) ↔ Самость (1). Научиться сочетать помощь другим с проявлением себя.")
 
+    # Обобщённый портрет
+    dominant = counts.most_common(1)[0][0]
+    archetype = ARCHETYPES[dominant]
+    st.markdown("**Обобщённый портрет:**")
+    st.markdown(f"Выраженная энергия: **{dominant} — {archetype['название']}**")
+    st.markdown(f"Суть: {archetype['описание']}")
+    st.markdown(f"Ключевой вектор развития: {archetype['задача']}")
+    st.markdown(f"Поддержка: {archetype['рекомендации']}")
+
     st.markdown("\n---\n")
-
-# 🔢 Ввод данных и запуск расчёта
-
-st.title("🔢 Числа Судьбы")
-st.markdown("Введите дату рождения для расчёта личной нумерологической матрицы")
-
-col1, col2, col3 = st.columns(3)
-with col1:
-    day = st.number_input("День", min_value=1, max_value=31, value=1)
-with col2:
-    month = st.number_input("Месяц", min_value=1, max_value=12, value=1)
-with col3:
-    year = st.number_input("Год", min_value=1900, max_value=2100, value=1984)
-
-if st.button("🔮 Рассчитать"):
-    def reduce(n):
-        while n not in [11, 22, 33] and n > 9:
-            n = sum(int(i) for i in str(n))
-        return n
-
-    soul_path = reduce(sum(int(i) for i in f"{day:02d}{month:02d}{year}"))
-    soul_number = reduce(day)
-    karma_tail = reduce(day + month)
-    gift = reduce(day + year)
-    body_code = reduce(month)
-    birth_year_code = reduce(sum(int(i) for i in str(year)))
-    soul_gate = reduce(abs(soul_number - karma_tail))
-    abundance_code = reduce(gift + body_code)
-    incarnation_memory = reduce(birth_year_code + karma_tail)
-    realization_channel = reduce(soul_path + gift)
-    love_channel = reduce(karma_tail + body_code)
-    spirit_channel = reduce(soul_path + birth_year_code)
-
-    results = {
-        "Число Жизненного Пути": soul_path,
-        "Число Души": soul_number,
-        "Число Кармы": karma_tail,
-        "Дар / Потенциал": gift,
-        "Код Тела / Реализации": body_code,
-        "Энергия года рождения": birth_year_code,
-        "Врата Души": soul_gate,
-        "Код Изобилия": abundance_code,
-        "Инкарнационная память": incarnation_memory,
-        "Канал Реализации": realization_channel,
-        "Канал Любви": love_channel,
-        "Канал Духа": spirit_channel
-    }
-
-    all_energies = list(results.values())
-
-    for k, v in results.items():
-        archetype = ARCHETYPES.get(v, {})
-        st.subheader(f"🔹 {k}: {v} — {archetype.get('название', 'Неизвестно')}")
-        st.markdown(f"**Суть:** {archetype.get('описание', '—')}")
-        st.markdown(f"**Свет:** {archetype.get('свет', '—')}")
-        st.markdown(f"**Тень:** {archetype.get('тень', '—')}")
-        st.markdown(f"**Задача:** {archetype.get('задача', '—')}")
-        st.markdown(f"**Рекомендации:** {archetype.get('рекомендации', '—')}")
-        st.markdown("---")
-
-    render_psychological_portrait(all_energies)
